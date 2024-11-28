@@ -2,6 +2,8 @@ import json
 import os
 import requests
 import openpyxl
+import asyncio
+import time
 
 url = "https://weibo.com/ajax/statuses/mymblog?uid=1676317545&page={}&feature=0"
 
@@ -42,14 +44,19 @@ def main():
     if os.path.exists(data_path + "page.txt"):
         with open(data_path + "page.txt") as f:
             first_page = int(f.read())
+    else:
+        first_page = 0
     for page in range(first_page + 1, 10000):
         print("page", page)
-        response = requests.get(url.format(page), headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-        else:
-            print("Request failed")
-            break
+        while True:
+            response = requests.get(url.format(page), headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                break
+            else:
+                print("Request failed. 1 minute later retrying...")
+                time.sleep(60)
+                print("Retrying...")
         data = data["data"]["list"]
         if not data:
             print("No more data")
